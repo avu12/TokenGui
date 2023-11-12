@@ -27,20 +27,6 @@ class Token:
         self.start_x = event.x
         self.start_y = event.y
 
-    # def on_token_release(self, event):
-    #     x, y = event.x - self.start_x, event.y - self.start_y
-    #     print(event.x,event.y)
-    #     print(event.x%30,event.y%30)
-    #     if event.x%30 <15:
-    #         print(-(event.x%30))
-    #         self.canvas.move(self.token, +15-(event.x%30), y)
-    #         self.canvas.move(self.label, +15-(event.x%30), y)
-    #     if event.x%30 >=15:
-    #         self.canvas.move(self.token, +30-((event.x%30)-15), y)
-    #         self.canvas.move(self.label, +30-((event.x%30)-15), y)
-    #         print(+30-((event.x%30)-15))
-    #     self.start_x = event.x
-    #     self.start_y = event.y
     def on_token_release(self, event):
         x, y = event.x - self.start_x, event.y - self.start_y
         self.canvas.coords(self.token, event.x-(event.x%30), event.y-(event.y%30),event.x-(event.x%30)+30,event.y-(event.y%30)+30)
