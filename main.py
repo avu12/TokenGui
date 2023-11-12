@@ -5,10 +5,10 @@ from tkinter.colorchooser import askcolor
 from tkinter import *
 
 class Token:
-    def __init__(self, canvas, x, y):
+    def __init__(self, canvas, x, y, text=""):
         self.canvas = canvas
         self.token = canvas.create_oval(x, y, x + 30, y + 30, fill="blue", tags="token")
-        self.label = canvas.create_text(x + 15, y + 15, text="", tags="token_label", fill="white")
+        self.label = canvas.create_text(x + 15, y + 15, text=text, tags="token_label", fill="white")
         self.canvas.tag_bind(self.token, "<ButtonPress-1>", self.on_token_click)
         self.canvas.tag_bind(self.token, "<B1-Motion>", self.on_token_drag)
         self.canvas.tag_bind(self.label, "<ButtonPress-1>", self.on_token_click)
@@ -36,6 +36,12 @@ class Token:
 
     def set_text(self, text):
         self.canvas.itemconfig(self.label, text=text)
+
+    def get_state(self):
+        x, y = self.canvas.coords(self.token)[:2]
+        text = self.canvas.itemcget(self.label, "text")
+        return {"x": int(x), "y": int(y), "text": text}
+
 
     def remove(self):
         self.canvas.delete(self.token)
@@ -66,6 +72,17 @@ class ResizingCanvas(Canvas):
         for j in range(0, self.height, self.cell_size):
             self.create_line(0, j, self.width, j, tags="grid", fill="gray")
 
+    def get_largest_cell(self):
+        max_size = 0
+        largest_cell = None
+        for item in self.find_withtag("grid"):
+            coords = self.coords(item)
+            size = (coords[2] - coords[0]) * (coords[3] - coords[1])
+            if size > max_size:
+                max_size = size
+                largest_cell = item
+        return largest_cell
+
 class TokenGame:
     def __init__(self, root):
         self.root = root
@@ -79,6 +96,8 @@ class TokenGame:
         self.create_add_token_button()
         self.create_remove_token_button()
         self.create_background_button()
+        self.create_save_button()
+        self.create_load_button()
 
     def create_add_token_button(self):
         button = tk.Button(self.root, text="Token Hozzáadás", command=self.add_token)
@@ -90,6 +109,14 @@ class TokenGame:
 
     def create_background_button(self):
         button = tk.Button(self.root, text="Háttér Beállítás", command=self.set_background)
+        button.pack()
+
+    def create_save_button(self):
+        button = tk.Button(self.root, text="Állapot Mentése", command=self.save_state)
+        button.pack()
+
+    def create_load_button(self):
+        button = tk.Button(self.root, text="Állapot Betöltése", command=self.load_state)
         button.pack()
 
     def add_token(self):
@@ -121,6 +148,27 @@ class TokenGame:
     def set_background(self):
         color = askcolor()[1]
         self.canvas.itemconfig("grid", fill=color)
+
+    def save_state(self):
+        state = [token.get_state() for token in self.tokens]
+        with open("saved_state.txt", "w") as f:
+            for token_state in state:
+                f.write(f"{token_state['x']} {token_state['y']} {token_state['text']}\n")
+
+    def load_state(self):
+        try:
+            with open("saved_state.txt", "r") as f:
+                lines = f.readlines()
+                for line in lines:
+                    x, y, text = map(str, line.split())
+                    x, y = int(float(x)), int(float(y))  # Módosított sor
+                    token = Token(self.canvas, x, y, text)
+                    self.tokens.append(token)
+        except FileNotFoundError:
+            messagebox.showinfo("Hiba", "Nincs mentett állapot.")
+        except ValueError:
+            messagebox.showinfo("Hiba", "Érvénytelen érték a mentett állapotban.")
+
 
 def main():
     root = tk.Tk()
